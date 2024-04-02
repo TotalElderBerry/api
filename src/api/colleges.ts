@@ -44,4 +44,3 @@ function getColleges(context: ElysiaContext): Promise<ResponseBody> {
     }
   });
 }
-
