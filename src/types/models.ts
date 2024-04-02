@@ -153,6 +153,18 @@ export type StudentModel = {
   date_stamp: string,
 }
 
+export type UnivStudentModel = {
+  id: number,
+  student_id: string,
+  course_id: string,
+  last_name: string,
+  first_name: string,
+  year_level: string,
+  email_address: string,
+  password?: string,
+  date_stamp: string,
+}
+
 export type TutorialModel = {
   id: number,
   student_id: string,
@@ -258,4 +270,16 @@ export type ICTStatistics = {
   countKitsClaimed: number;
   countPaymentConfirmed: number;
   countTShirtClaimed: number;
+}
+
+export type AttendanceModel = {
+  id: number;
+  event_id: number;
+  student_id: number;
+  day1_am: string;
+  day1_pm: string;
+  day2_am: string;
+  day2_pm: string;
+  day3_am: string;
+  day3_pm: string;
 }
