@@ -61,18 +61,18 @@ async function getQrcode(context: ElysiaContext) {
       },
       dotsOptions: {
         type: "square",
-        color: theme === 'dark' ? "#988e97" : "#4a2558",
+        color: theme === 'dark' ? "#dfdfdf" : "#4a2558",
       },
       backgroundOptions: {
-        color: "transparent"
+        color: theme === 'adaptive' ? '#ffffff' : "transparent"
       },
       cornersSquareOptions: {
         type: "extra-rounded",
-        color: theme === 'dark' ? "#988e97" : "#4a2558",
+        color: theme === 'dark' ? "#dfdfdf" : "#4a2558",
       },
       cornersDotOptions: {
         type: "dot",
-        color: theme === 'dark' ? "#988e97" : "#4a2558",
+        color: theme === 'dark' ? "#dfdfdf" : "#4a2558",
       },
     });
 
