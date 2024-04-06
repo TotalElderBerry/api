@@ -87,7 +87,7 @@ class TatakFormAttendance {
       try {
         // Get admin by username
         const result = await db.query<[{ count: bigint }]>(
-          "SELECT COUNT(*) as count FROM attendance WHERE student_id = ? and event_id = ?", [studentId, eventId]
+          "SELECT COUNT(*) as count FROM tatakforms_attendance WHERE student_id = ? and event_id = ?", [studentId, eventId]
         );
 
         // Resolve promise
@@ -113,7 +113,7 @@ class TatakFormAttendance {
       try {
         // Get attendance by event
         const result = await db.query<AttendanceModel[]>(
-          "SELECT * FROM attendance WHERE student_id = ? and event_id = ?", [studentId, eventId]
+          "SELECT * FROM tatakforms_attendance WHERE student_id = ? and event_id = ?", [studentId, eventId]
         );
 
         resolve(result.length > 0 ? result[0] : null);
@@ -138,7 +138,7 @@ class TatakFormAttendance {
       try {
         // Get admin by username
         const result = await db.query<AttendanceModel[]>(
-          "SELECT * FROM attendance WHERE student_id = ?", [studentId]
+          "SELECT * FROM tatakforms_attendance WHERE student_id = ?", [studentId]
         );
         resolve([result, result.length]);
       }
@@ -166,7 +166,7 @@ class TatakFormAttendance {
           FROM
             attendance
           INNER JOIN
-            univ_students s
+            tatakforms_students s
           INNER JOIN
             colleges_courses c ON c.id = s.course_id
           WHERE
@@ -200,7 +200,7 @@ class TatakFormAttendance {
       try {
         // Get admin by username
         const result = await db.query<any>(
-          `SELECT ${columnName} FROM attendance WHERE student_id = ? AND event_id = ?`, [studentId, eventId]
+          `SELECT ${columnName} FROM tatakforms_attendance WHERE student_id = ? AND event_id = ?`, [studentId, eventId]
         );
 
         // Resolve promise

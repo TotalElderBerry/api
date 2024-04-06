@@ -32,7 +32,7 @@ class TatakFormStudent {
         // Get pagination
         if (pagination && !isObjectEmpty(pagination)) {
           const { query, countQuery, values, countValues } = paginationWrapper(db, {
-            query: "SELECT * FROM univ_students ORDER BY id DESC",
+            query: "SELECT * FROM tatakforms_students ORDER BY id DESC",
             request: pagination
           });
 
@@ -49,7 +49,7 @@ class TatakFormStudent {
         }
         
         // Get all students
-        const result = await db.query<UnivStudentModel[]>(`SELECT * FROM univ_students ORDER BY id DESC`);
+        const result = await db.query<UnivStudentModel[]>(`SELECT * FROM tatakforms_students ORDER BY id DESC`);
 
         // If no results
         if (result.length === 0) {
@@ -81,7 +81,7 @@ class TatakFormStudent {
 
       try {
         // Query string
-        let query = 'SELECT * FROM univ_students WHERE student_id = ?';
+        let query = 'SELECT * FROM tatakforms_students WHERE student_id = ?';
 
         // If getting data from admin
         if (fromAdmin) {
@@ -90,8 +90,9 @@ class TatakFormStudent {
               s.id, s.student_id, s.last_name, s.first_name,
               s.year_level, s.email_address, s.password, s.date_stamp, s.course_id
             FROM
-              univ_admin a
-            INNER JOIN univ_students s ON s.id = a.students_id WHERE s.student_id = ?
+              tatakforms_admin a
+            INNER JOIN
+              tatakforms_students s ON s.id = a.students_id WHERE s.student_id = ?
           `;
         }
 
@@ -151,7 +152,7 @@ class TatakFormStudent {
   
         // Insert student
         const result = await db.query<MariaUpdateResult>(
-          `INSERT INTO univ_students (student_id, year_level, first_name, last_name, course_id, email_address, password, date_stamp) VALUES (?, ?, ?,?, ?, ?, ?, NOW())`, [
+          `INSERT INTO tatakforms_students (student_id, year_level, first_name, last_name, course_id, email_address, password, date_stamp) VALUES (?, ?, ?,?, ?, ?, ?, NOW())`, [
             student.student_id,
             student.year_level,
             student.first_name,
@@ -194,7 +195,7 @@ class TatakFormStudent {
         Log.i(`Checking if student exists (${key} = ${value})`);
         // Get result
         const result = await db.query<[{ count: bigint }]>(
-          `SELECT COUNT(*) AS count FROM univ_students WHERE ${key} = ?`, [value]
+          `SELECT COUNT(*) AS count FROM tatakforms_students WHERE ${key} = ?`, [value]
         );
 
         // If no results

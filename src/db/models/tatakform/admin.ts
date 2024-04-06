@@ -30,11 +30,11 @@ class TatakFormAdmin {
           `SELECT
             s.id, s.student_id, s.last_name, s.first_name, s.year_level, s.email_address, s.password, s.date_stamp, s.course_id, c.college_id, co.acronym, co.name
           FROM
-            univ_admin a
+            tatakforms_admin a
           INNER JOIN
-            univ_students s ON s.id = a.univstudents_id
+            tatakforms_students s ON s.id = a.tatakforms_students_id
           INNER JOIN
-            colleges_courses c ON c.id = s.
+            colleges_courses c ON c.id = s.course_id
           INNER JOIN
             colleges co on co.id = c.college_id
           WHERE
@@ -72,9 +72,9 @@ class TatakFormAdmin {
           `SELECT
             s.id, s.student_id, s.last_name, s.first_name, s.year_level, s.email_address, s.password, s.date_stamp, s.course_id, co.acronym, co.name
           FROM
-            univ_admin a
+            tatakforms_admin a
           INNER JOIN
-            univ_students s ON s.id = a.univstudents_id
+            tatakforms_students s ON s.id = a.tatakforms_students_id
           INNER JOIN
             colleges_courses c ON c.id = s.course_id
           INNER JOIN
