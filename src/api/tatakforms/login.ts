@@ -1,12 +1,11 @@
 import type { ElysiaContext, ResponseBody } from "../../types";
 import { createSessionToken } from "../../utils/security";
 import { status501 } from "../../routes";
-import { AuthType, ErrorTypes } from "../../types/enums";
-import { jwtVerify } from "jose";
+import { AuthType } from "../../types/enums";
 import response from "../../utils/response";
 import Strings from "../../config/strings";
 
-import Student from "../../db/models/univ_events/student";
+import TatakFormStudent from "../../db/models/tatakform/student";
 import Log from "../../utils/log";
 
 /**
@@ -26,23 +25,17 @@ export function login(context: ElysiaContext): Promise<ResponseBody | undefined>
 
 
 /**
- * POST /ucdays2024/login
+ * POST /tatakforms/login
  * @param context Elysia context
  */
 async function postLogin(context: ElysiaContext) {
   // Get request data
-  let { username, password } = context.body || {};
-  const student_id = username;
-  // If type isnt specified
-  // if (!type) {
-  //   context.set.status = 400;
-  //   return response.error("Type is required");
-  // }
+  let { student_id, password } = context.body || {};
 
   // If student_id is not specified
   if (!student_id) {
     context.set.status = 400;
-    return response.error("Username is required");
+    return response.error("Student ID is required");
   }
 
   // If password is not specified
@@ -52,7 +45,8 @@ async function postLogin(context: ElysiaContext) {
   }
 
   try {
-    const student = await Student.getByStudentId(student_id.trim());
+    // Get student
+    const student = await TatakFormStudent.getByStudentId(student_id.trim());
 
     // Compare password
     if (!(await Bun.password.verify(password, student.password || ""))) {
@@ -76,8 +70,8 @@ async function postLogin(context: ElysiaContext) {
     });
 
     // Remove password from user
-    delete username.password;
-
+    delete data.password;
+    // Return success
     return response.success(Strings.LOGIN_SUCCESS, { data, accessToken, refreshToken });
   }
 

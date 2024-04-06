@@ -1,24 +1,24 @@
 import type { UnivStudentModel } from "../../../types/models";
 import type { MariaUpdateResult } from "../../../types";
+
 import { PaginationOutput } from "../../../types/request";
 import { ErrorTypes } from "../../../types/enums";
 
 import { isNumber, isEmail, trim, isObjectEmpty } from "../../../utils/string";
-import { UnivStudentsColumn } from "../../structure.d.ts";
-import { generateToken, hashPassword } from "../../../utils/security";
+import { hashPassword } from "../../../utils/security";
 import { paginationWrapper } from "../../../utils/pagination";
+import { UnivStudentsColumn } from "../../structure.d";
 
 import Database from "../..";
 import Log from "../../../utils/log";
 import Strings from "../../../config/strings";
-import Config from "../../../config";
 
 /**
- * Student model
+ * TatakForm Student model
  * This model represents a student in the database
  * @author TotalElderBerry (Hey)
  */
-class UnivStudent {
+class TatakFormStudent {
 
   /**
    * Get all students
@@ -122,20 +122,20 @@ class UnivStudent {
   public static insert(student: UnivStudentModel): Promise<void> {
     return new Promise(async (resolve, reject) => {
       // Validate
-      const error = UnivStudent.validate(student);
+      const error = TatakFormStudent.validate(student);
 
       if (error) {
         return reject(error);
       }
 
       // Check if student id already exists
-      if (await UnivStudent.isExist(UnivStudentsColumn.STUDENT_ID, student.student_id)) {
+      if (await TatakFormStudent.isExist(UnivStudentsColumn.STUDENT_ID, student.student_id)) {
         Log.i(`Student ID already exists (${student.student_id})`);
         return reject([Strings.STUDENT_ALREADY_EXIST, UnivStudentsColumn.STUDENT_ID]);
       }
 
       // Check if email already exists
-      if (await UnivStudent.isExist(UnivStudentsColumn.EMAIL_ADDRESS, student.email_address)) {
+      if (await TatakFormStudent.isExist(UnivStudentsColumn.EMAIL_ADDRESS, student.email_address)) {
         Log.i(`Student email already exists (${student.email_address})`);
         return reject([Strings.STUDENT_EMAIL_ALREADY_EXIST, UnivStudentsColumn.EMAIL_ADDRESS]);
       }
@@ -245,4 +245,4 @@ class UnivStudent {
   }
 }
 
-export default UnivStudent;
+export default TatakFormStudent;

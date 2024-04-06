@@ -1,17 +1,15 @@
 import type { ElysiaContext, ResponseBody } from "../../types";
 import { createSessionToken } from "../../utils/security";
 import { status501 } from "../../routes";
-import { AuthType, ErrorTypes } from "../../types/enums";
-import { jwtVerify } from "jose";
+import { AuthType } from "../../types/enums";
 import response from "../../utils/response";
 import Strings from "../../config/strings";
 
-import Student from "../../db/models/univ_events/student";
 import Log from "../../utils/log";
-import UnivAdmin from "../../db/models/univ_events/admin";
+import TatakFormAdmin from "../../db/models/tatakform/admin";
 
 /**
- * UC Days Login API
+ * Tatakforms Admin Login API
  * @author TotalElderBerry (huhu)
  */
 export function login(context: ElysiaContext): Promise<ResponseBody | undefined> | ResponseBody  {
@@ -27,17 +25,15 @@ export function login(context: ElysiaContext): Promise<ResponseBody | undefined>
 
 
 /**
- * POST /ucdays2024/login
+ * POST /tatakforms/admin/login
  * @param context Elysia context
  */
 async function postLogin(context: ElysiaContext) {
   // Get request data
   let { username, password } = context.body || {};
-  const student_id = username;
-  // If type isnt specified
-  
+
   // If student_id is not specified
-  if (!student_id) {
+  if (!username) {
     context.set.status = 400;
     return response.error("Username is required");
   }
@@ -49,10 +45,10 @@ async function postLogin(context: ElysiaContext) {
   }
 
   try {
-    const student = await UnivAdmin.getByUsernameAndPassword(student_id.trim(),password);
-
+    // Get admin
+    const admin = await TatakFormAdmin.getByUsernameAndPassword(username.trim(), password);
     // Data to be stored in the token
-    const data = { role: AuthType.COLLEGE_ADMIN, ...student };
+    const data = { role: AuthType.COLLEGE_ADMIN, ...admin };
     // Create access token (1 day)
     const accessToken = await createSessionToken(false, data, "1d");
     // Create refresh token (15 days)
@@ -60,15 +56,15 @@ async function postLogin(context: ElysiaContext) {
 
     // Log the login
     Log.login({
-      student_id: student.student_id,
+      student_id: admin.student_id,
       type: data.role,
-      name: `${student.first_name} ${student.last_name}`,
-      students_id: student.id,
+      name: `${admin.first_name} ${admin.last_name}`,
+      students_id: admin.id,
     });
 
     // Remove password from user
     delete username.password;
-
+    // Return success
     return response.success(Strings.LOGIN_SUCCESS, { data, accessToken, refreshToken });
   }
 

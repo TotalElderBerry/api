@@ -2,7 +2,7 @@ import type { ElysiaContext, ResponseBody } from "../../types";
 import { ErrorTypes } from "../../types/enums";
 import { status501 } from "../../routes";
 
-import UnivStudent from "../../db/models/univ_events/student";
+import TatakFormStudent from "../../db/models/tatakform/student";
 import response from "../../utils/response";
 import Strings from "../../config/strings";
 import Log from "../../utils/log";
@@ -29,7 +29,7 @@ export function students(context: ElysiaContext): Promise<ResponseBody | undefin
 async function postStudents(context: ElysiaContext) {
   try {
     // Insert student
-    await UnivStudent.insert(context.body);
+    await TatakFormStudent.insert(context.body);
     // If no error, student is created
     return response.success("You have successfully registered! 💛");
   }

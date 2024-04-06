@@ -7,7 +7,7 @@ import { jwtVerify } from "jose";
 import response from "../utils/response";
 import Strings from "../config/strings";
 import Student from "../db/models/student";
-import UnivStudent from "../db/models/univ_events/student";
+import TatakFormStudent from "../db/models/tatakform/student";
 import Log from "../utils/log";
 
 /**
@@ -67,7 +67,7 @@ async function getLogin(context: ElysiaContext) {
     const role = payload.role as AuthType;
     let student;
     if(role === AuthType.UNIV_ACCOUNT || role === AuthType.COLLEGE_ADMIN){
-      student = await UnivStudent.getByStudentId(payload.student_id as string);
+      student = await TatakFormStudent.getByStudentId(payload.student_id as string);
     }else{
       // If token is valid, get student
       student = await Student.getByStudentId(payload.student_id as string);
