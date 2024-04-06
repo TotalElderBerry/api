@@ -86,6 +86,49 @@ class College {
       }
     });
   }
+
+  /**
+   * Get college by acronym
+   * @param acronym 
+   */
+  public static getByCourseId(courseId: number): Promise<CollegeModel> {
+    return new Promise(async (resolve, reject) => {
+      // Get database instance
+      const db = Database.getInstance();
+
+      try {
+        
+        // Get course
+        const courses = await db.query<CourseModel[]>(`SELECT * FROM colleges_courses WHERE id = ? LIMIT 1`, [ courseId ]);
+
+        // If no results
+        if (courses.length === 0) {
+          return reject(`Course with id #${courseId} not found`);
+        }
+
+        // Set the courses to the college
+        const college = await db.query<CollegeModel[]>(`SELECT * FROM colleges WHERE id = ? LIMIT 1`, [courses[0].college_id]);
+
+        // If no results
+        if (college.length === 0) {
+          Log.e(`College with course id #${courseId} not found`);
+          return reject(`College with course id #${courseId} not found`);
+        }
+
+        // Set the courses to the college
+        college[0].courses = courses;
+
+        // Return the college
+        resolve(college[0]);
+      }
+      
+      // Log error and reject promise
+      catch (e) {
+        Log.e(e);
+        reject(ErrorTypes.DB_ERROR);
+      }
+    });
+  }
 }
 
 export default College;

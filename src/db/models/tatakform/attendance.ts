@@ -105,7 +105,7 @@ class TatakFormAttendance {
   /**
    * Get attendance history of student
    */
-  public static getAttendanceByEvent(studentId: string, eventId: number) {
+  public static getAttendanceByEvent(studentId: string, eventId: number): Promise<AttendanceModel | null> {
     return new Promise(async (resolve, reject) => {
       // Get database instance
       const db = Database.getInstance();
