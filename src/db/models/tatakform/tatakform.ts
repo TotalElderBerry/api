@@ -1,14 +1,14 @@
-import { ErrorTypes } from "../../types/enums";
-import { TatakformModel } from "../../types/models";
+import { ErrorTypes } from "../../../types/enums";
+import { TatakformModel } from "../../../types/models";
 import { PDFDocument, StandardFonts } from 'pdf-lib';
-import { getReadableDate } from "../../utils/date";
+import { getReadableDate } from "../../../utils/date";
 import { join } from "path";
 
-import TatakFormAttendance from "./tatakform/attendance";
-import TatakFormStudent from "./tatakform/student";
-import Log from "../../utils/log";
-import College from "../../db/models/college";
-import Database from "../";
+import TatakFormAttendance from "./attendance";
+import TatakFormStudent from "./student";
+import Log from "../../../utils/log";
+import College from "../college";
+import Database from "../..";
 
 /**
  * TatakForm model
@@ -80,7 +80,7 @@ class Tatakform {
   }
 
   /**
-   * Generate PDF file
+   * Generate Tatakform PDF
    */
   public static generatePDF(studentId: string, slug: string): Promise<File> {
     return new Promise(async (resolve, reject) => {
@@ -208,8 +208,10 @@ class Tatakform {
           }
         }
 
-        // Save pdf
+        // Save PDF
         const buffer = await pdf.save();
+        // Log download
+        Log.i(`💙 [Tatakform] [${slug.toUpperCase()}] – ${student.first_name} ${student.last_name} (${student.student_id})`);
         // Resolve promise
         resolve(new File([buffer], `tatakform_${college.acronym.toLowerCase()}_${studentId}.pdf`, { type: "application/pdf" }));
       }

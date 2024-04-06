@@ -6,8 +6,9 @@ import TatakFormStudent from "../../db/models/tatakform/student";
 import response from "../../utils/response";
 import Strings from "../../config/strings";
 import TatakFormAttendance from "../../db/models/tatakform/attendance";
-import Tatakform from "../../db/models/tatakform";
+import Tatakform from "../../db/models/tatakform/tatakform";
 import { setHeader } from "../../utils/security";
+import Log from "../../utils/log";
 
 /**
  * Tatakform Attendance API

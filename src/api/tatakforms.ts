@@ -1,6 +1,6 @@
 import type { ElysiaContext, ResponseBody } from "../types";
 import response from "../utils/response";
-import Tatakform from "../db/models/tatakform";
+import Tatakform from "../db/models/tatakform/tatakform";
 import { status501 } from "../routes";
 
 /**

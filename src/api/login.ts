@@ -66,7 +66,7 @@ async function getLogin(context: ElysiaContext) {
     // Get Role
     const role = payload.role as AuthType;
     let student;
-    if(role === AuthType.UNIV_ACCOUNT || role === AuthType.COLLEGE_ADMIN){
+    if(role === AuthType.TATAKFORM_ACCOUNT || role === AuthType.TATAKFORM_ACCOUNT_ADMIN){
       student = await TatakFormStudent.getByStudentId(payload.student_id as string);
     }else{
       // If token is valid, get student

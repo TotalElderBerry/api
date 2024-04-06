@@ -48,7 +48,7 @@ async function postLogin(context: ElysiaContext) {
     // Get admin
     const admin = await TatakFormAdmin.getByUsernameAndPassword(username.trim(), password);
     // Data to be stored in the token
-    const data = { role: AuthType.COLLEGE_ADMIN, ...admin };
+    const data = { role: AuthType.TATAKFORM_ACCOUNT_ADMIN, ...admin };
     // Create access token (1 day)
     const accessToken = await createSessionToken(false, data, "1d");
     // Create refresh token (15 days)

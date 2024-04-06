@@ -55,7 +55,7 @@ async function postLogin(context: ElysiaContext) {
     }
   
     // Data to be stored in the token
-    const data = { role: AuthType.UNIV_ACCOUNT, ...student };
+    const data = { role: AuthType.TATAKFORM_ACCOUNT, ...student };
     // Create access token (1 day)
     const accessToken = await createSessionToken(false, data, "1d");
     // Create refresh token (15 days)
