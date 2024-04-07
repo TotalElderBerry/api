@@ -2,6 +2,7 @@ import type { ElysiaContext, ResponseBody } from "../types";
 import response from "../utils/response";
 import Tatakform from "../db/models/tatakform/tatakform";
 import { status501 } from "../routes";
+import College from "../db/models/college";
 
 /**
  * Tatakforms API
@@ -25,6 +26,17 @@ async function getTatakforms(context: ElysiaContext) {
   const slug = context.params?.slug;
 
   try {
+    // If getting tatakform config
+    if (context.path.endsWith("/config")) {
+      // Get colleges
+      const colleges = await College.getAll();
+
+      // Return tatakform config
+      return response.success("Fetched tatakform config.", {
+        colleges
+      });
+    }
+
     // if slug is provided
     if (slug) {
       const tatakform = await Tatakform.getBySlug(slug);

@@ -15,7 +15,7 @@ import Log from "../utils/log";
  * @author TotalElderBerry (Brian Keith Lisondra)
  * @author mavyfaby (Maverick Fabroa)
  */
-export function login(context: ElysiaContext): Promise<ResponseBody | undefined> | ResponseBody  {
+export function login(context: ElysiaContext): Promise<ResponseBody | undefined> | ResponseBody {
   switch (context.request.method) {
     case "GET":
       return getLogin(context);
@@ -44,7 +44,7 @@ async function getLogin(context: ElysiaContext) {
 
   // Get token from authorization header
   const token = authorization.split(" ")[1];
-  
+
   // Don't proceed if token is not specified or not starting with "ey"
   if (!token || !token.startsWith("ey")) {
     context.set.status = 400;
@@ -56,7 +56,7 @@ async function getLogin(context: ElysiaContext) {
     const { payload } = await jwtVerify(token, new TextEncoder().encode(process.env.SECRET_KEY), {
       algorithms: ["HS256"]
     });
-    
+
     // If token is invalid
     if (!payload) {
       context.set.status = 401;
@@ -65,11 +65,16 @@ async function getLogin(context: ElysiaContext) {
 
     // Get Role
     const role = payload.role as AuthType;
+    
     let student;
-    if(role === AuthType.TATAKFORM_ACCOUNT || role === AuthType.TATAKFORM_ACCOUNT_ADMIN){
+
+    // If role is a TatakForm Account
+    if (role === AuthType.TATAKFORM_ACCOUNT || role === AuthType.TATAKFORM_ACCOUNT_ADMIN) {
       student = await TatakFormStudent.getByStudentId(payload.student_id as string);
-    }else{
-      // If token is valid, get student
+    }
+    
+    // Otherwise, get student
+    else {
       student = await Student.getByStudentId(payload.student_id as string);
     }
 
@@ -97,7 +102,7 @@ async function getLogin(context: ElysiaContext) {
       context.set.status = 401;
       return response.error(Strings.LOGIN_FAILED);
     }
-    
+
     Log.e(err);
   }
 }
@@ -137,13 +142,13 @@ async function postLogin(context: ElysiaContext) {
   try {
     // User can be either a student or an admin
     const user = await Student.getByStudentId(student_id.trim(), type == AuthType.ADMIN);
-  
+
     // Compare password
     if (!(await Bun.password.verify(password, user.password || ""))) {
       context.set.status = 404;
       return response.error(Strings.LOGIN_FAILED);
     }
-  
+
     // Data to be stored in the token
     const data = { role: type == AuthType.ADMIN ? AuthType.ADMIN : AuthType.STUDENT, ...user };
     // Create access token (1 day)

@@ -38,11 +38,12 @@ const routes: AppRoutes[] = [
   { path: "/tatakforms/register", methods: ["POST", "OPTIONS"], handler: tatakformStudents },
   { path: "/tatakforms/admin/login", methods: ["POST", "OPTIONS"], handler: tatakformAdminLogin },
   { path: "/tatakforms/:slug", methods: ["GET"], handler: tatakforms },
-  { path: "/tatakforms", methods: ["GET"], handler: tatakforms },
   { path: "/tatakforms/attendance/" , methods: ['GET'], handler: tatakformAttendance, auth: {GET: AuthType.TATAKFORM_ACCOUNT} },
   { path: "/tatakforms/attendance/event/:eventId" , methods: ['GET'], handler: tatakformAttendance, auth: {GET: AuthType.TATAKFORM_ACCOUNT_ADMIN}},
   { path: "/tatakforms/attendance/:slug" , methods: ['POST','GET'], handler: tatakformAttendance, auth: {POST: AuthType.TATAKFORM_ACCOUNT_ADMIN} },
   { path: "/tatakforms/attendance/:slug/download" , methods: ['GET'], handler: tatakformAttendance, auth: {GET: AuthType.TATAKFORM_ACCOUNT} },
+  { path: "/tatakforms/config", methods: ["GET"], handler: tatakforms },
+  { path: "/tatakforms", methods: ["GET"], handler: tatakforms },
 
   { path: "/announcements/:id", methods: ["PUT", "DELETE", "OPTIONS"], handler: announcements, auth: { PUT: AuthType.ADMIN, DELETE: AuthType.ADMIN }},
   { path: "/announcements", methods: ["GET","POST"], handler: announcements, auth: { POST: AuthType.ADMIN }},

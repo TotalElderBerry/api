@@ -36,7 +36,7 @@ class College {
         for (const college of colleges) {
           // Add courses to college
           college.courses = courses.filter((course) => course.college_id === college.id);
-        } 
+        }
 
         // Return the courses
         resolve(colleges);
