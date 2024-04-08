@@ -211,7 +211,7 @@ class Tatakform {
         // Save PDF
         const buffer = await pdf.save();
         // Log download
-        Log.i(`💙 [Tatakform] [${slug.toUpperCase()}] – ${student.first_name} ${student.last_name} (${student.student_id})`);
+        Log.i(`💙 [Tatakform] [DOWNLOAD] [${slug.toUpperCase()}] – ${student.first_name} ${student.last_name} (${student.student_id})`);
         // Resolve promise
         resolve(new File([buffer], `tatakform_${college.acronym.toLowerCase()}_${studentId}.pdf`, { type: "application/pdf" }));
       }

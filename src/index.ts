@@ -23,7 +23,6 @@ Log.extend(app);
 
 // Set default headers
 app.onBeforeHandle((context: ElysiaContext) => {
-  setHeader(context, "content-type", "application/json;charset=utf-8");
   setHeader(context, "x-powered-by", "Bun + Elysia (UC Main CSP-S Server)");
   setHeader(context, "access-control-allow-methods", "GET, POST, PUT, DELETE, OPTIONS");
   setHeader(context, "access-control-allow-headers", "Origin, Content-Type, Authorization");
