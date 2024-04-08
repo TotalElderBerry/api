@@ -19,7 +19,7 @@ class TatakFormAttendance {
       const currentDate = new Date();
       const fromDate = new Date(event.from_date);
       const toDate = new Date(event.to_date);
-
+      toDate.setDate(toDate.getDate() + 1)
       let query;
       let columnName = "day1_am";
 
