@@ -100,8 +100,8 @@ class TatakFormStudent {
         const result = await db.query<UnivStudentModel[]>(query, [student_id]);
         // If no results
         if (result.length === 0) {
-          Log.e(`${fromAdmin ? 'Admin' : 'Student'} not found (id = ${student_id})`);
-          return reject(ErrorTypes.DB_EMPTY_RESULT);
+          Log.e(`[TATAKFORM] [getByStudentId] ${fromAdmin ? 'Admin' : 'Student'} not found (id = ${student_id})`);
+          return reject(`Student ID (${student_id}) not found`);
         }
 
         // Resolve promise
@@ -111,7 +111,7 @@ class TatakFormStudent {
       // Log error and reject promise
       catch (e) {
         Log.e(e);
-        reject(ErrorTypes.DB_ERROR);
+        reject(e);
       }
     });
   }

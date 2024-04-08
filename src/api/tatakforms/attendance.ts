@@ -1,21 +1,19 @@
 import type { ElysiaContext, ResponseBody } from "../../types";
 import { ErrorTypes } from "../../types/enums";
 import { status501 } from "../../routes";
+import { setHeader } from "../../utils/security";
 
-import TatakFormStudent from "../../db/models/tatakform/student";
 import response from "../../utils/response";
 import Strings from "../../config/strings";
 import TatakFormAttendance from "../../db/models/tatakform/attendance";
 import Tatakform from "../../db/models/tatakform/tatakform";
-import { setHeader } from "../../utils/security";
-import Log from "../../utils/log";
 
 /**
  * Tatakform Attendance API
  * @author TotalElderBerry (Unknown af)
  * @param context
  */
-export function attendance(context: ElysiaContext): Promise<ResponseBody | undefined> | ResponseBody {
+export function attendance(context: ElysiaContext): Promise<ResponseBody | undefined | File> | ResponseBody {
   switch (context.request.method) {
     case "GET":
       if (context.params?.eventId) {
@@ -41,7 +39,6 @@ async function postAttendance(context: ElysiaContext) {
     const slug = context.params?.slug;
     if (slug) {
       const tatak_event = await Tatakform.getBySlug(slug);
-      const student = await TatakFormStudent.getByStudentId(context.body.student_id);
 
       if (tatak_event) {
         await TatakFormAttendance.attendStudent(context.body.student_id, tatak_event);
@@ -73,16 +70,30 @@ async function postAttendance(context: ElysiaContext) {
  * GET /tatakforms/attendance/:slug
  * Fetches the attedance history of a student in an event
  * 
+ * GET /tatakforms/attendance/count/:eventId/:collegeId
+ * Fetch attendance count by event and college
+ * 
  * GET /tatakforms/attendance/:slug/download
  * Download tatakform attendance
  */
 async function getAttendance(context: ElysiaContext) {
   try {
+    
     // Get slug
     const slug = context.params?.slug;
-
+    
     // If slug is specified
     if (slug) {
+      // If path contains with count
+      if (context.path.includes("count")) {
+        // Get college id
+        const collegeId = context.params?.collegeId;
+        // Get attendance count
+        const count = await TatakFormAttendance.getStudentCountAttendedBySlugAndCollege(slug, Number(collegeId));
+        // Return response
+        return response.success("Fetch Successful", count);
+      }
+      
       // If path ends with "download"
       if (context.path.endsWith("download")) {
         // Generate PDF
@@ -99,13 +110,13 @@ async function getAttendance(context: ElysiaContext) {
       const tatakform = await Tatakform.getBySlug(slug);
       // Get attendance history by event
       const attendance = await TatakFormAttendance.getAttendanceByEvent(context.user?.student_id, tatakform.id);
-      
       // Return response
       return response.success("Fetch Successful", attendance);
     }
 
     // Otherwise, get all attendance history
     const history = await TatakFormAttendance.getAttendance(context.user?.student_id);
+    // Return response
     return response.success("Fetch Successful", history);
   }
   
@@ -138,7 +149,7 @@ async function getAllStudentsAttended(context: ElysiaContext) {
     // If event id is specified
     if (eventId) {
       // Get all students attended by event and college
-      const attendance = await TatakFormAttendance.getStudentsAttendedByEventAndCollege(eventId, context.user.college_id);
+      const attendance = await TatakFormAttendance.getStudentsAttendedByEventAndCollege(Number(eventId), context.user.college_id);
       return response.success("Success", attendance)
     }
   }

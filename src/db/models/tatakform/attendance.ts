@@ -52,7 +52,7 @@ class TatakFormAttendance {
           // Check if student has not yet registered time
           await TatakFormAttendance.isStudentAttended(studentId, event.id, columnName);
 
-          query = `UPDATE attendance SET ${columnName} = NOW() WHERE student_id = ? and event_id = ?`
+          query = `UPDATE tatakforms_attendance SET ${columnName} = NOW() WHERE student_id = ? and event_id = ?`
           const updateResult = await db.query<MariaUpdateResult>(
             query, [studentId, event.id]
           );
@@ -60,7 +60,7 @@ class TatakFormAttendance {
             resolve("Updated Attendance")
           }
         } else {
-          query = `INSERT INTO attendance (student_id, event_id, ${columnName}) VALUES (?,?,NOW())`
+          query = `INSERT INTO tatakforms_attendance (student_id, event_id, ${columnName}) VALUES (?,?,NOW())`
           const updateResult = await db.query<MariaUpdateResult>(
             query, [studentId, event.id]
           );
@@ -154,7 +154,7 @@ class TatakFormAttendance {
   /**
    * Get all attendance of students by event and college
    */
-  public static getStudentsAttendedByEventAndCollege(eventId: any, collegeId: any) {
+  public static getStudentsAttendedByEventAndCollege(eventId: number, collegeId: number) {
     return new Promise(async (resolve, reject) => {
       // Get database instance
       const db = Database.getInstance();
@@ -162,15 +162,15 @@ class TatakFormAttendance {
       try {
         const result = await db.query<AttendanceModel[]>(
           `SELECT
-            attendance.*, s.first_name, s.last_name, s.course_id, c.acronym
+            a.*, s.first_name, s.last_name, s.course_id, c.acronym
           FROM
-            attendance
+            tatakforms_attendance a
           INNER JOIN
             tatakforms_students s
           INNER JOIN
             colleges_courses c ON c.id = s.course_id
           WHERE
-            attendance.student_id = s.student_id AND event_id = ? and c.college_id = ?
+            a.student_id = s.student_id AND event_id = ? and c.college_id = ?
           `, [eventId, collegeId]
         );
 
@@ -179,6 +179,42 @@ class TatakFormAttendance {
         } else {
           reject("Error")
         }
+      }
+
+      // Log error and reject promise
+      catch (e) {
+        Log.e(e);
+        reject(e);
+      }
+    });
+  }
+
+  /**
+   * Get all attendance count by event and college
+   */
+  public static getStudentCountAttendedBySlugAndCollege(eventSlug: string, collegeId: number) {
+    return new Promise(async (resolve, reject) => {
+      // Get database instance
+      const db = Database.getInstance();
+
+      try {
+        const result = await db.query<{ count: bigint }[]>(
+          `SELECT
+            COUNT(*) AS count
+          FROM
+            tatakforms_attendance a
+          INNER JOIN
+            tatakforms_students s ON a.student_id = s.student_id
+          INNER JOIN
+            tatakforms t ON a.event_id = t.id
+          INNER JOIN
+            colleges_courses c ON c.id = s.course_id
+          WHERE
+            a.student_id = s.student_id AND t.slug = ? and c.college_id = ?
+          `, [eventSlug, collegeId]
+        );
+
+        resolve(Number(result[0].count));
       }
 
       // Log error and reject promise

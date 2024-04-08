@@ -10,10 +10,13 @@ import Log from "../../utils/log";
 /**
  * Students API
  * @author TotalElderBerry (Unknown af)
+ * @author mavyfaby (Maverick Fabroa)
  * @param context
  */
 export function students(context: ElysiaContext): Promise<ResponseBody | undefined> | ResponseBody {
   switch (context.request.method) {
+    case "GET":
+      return getStudents(context);
     case "POST":
       return postStudents(context);
     case "OPTIONS":
@@ -21,6 +24,28 @@ export function students(context: ElysiaContext): Promise<ResponseBody | undefin
   }
 
   return status501(context);
+}
+
+/**
+ * GET /tatakforms/students/(:studentId)
+ */
+async function getStudents(context: ElysiaContext) {
+  // Get studentId from context
+  const { studentId } = context.params || {};
+
+  try {
+    // If studentId is not provided, return empty data
+    if (!studentId) return response.error("No student found.", {});
+    // If studentId is provided, return student by studentId
+    const student = await TatakFormStudent.getByStudentId(studentId);
+    // Return student
+    return response.success(student);
+  }
+
+  catch (error) {
+    context.set.status = 500;
+    return response.error(error);
+  }
 }
 
 /**
