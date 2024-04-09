@@ -44,6 +44,11 @@ const routes: AppRoutes[] = [
   { path: "/tatakforms/attendance/:slug/download" , methods: ['GET'], handler: tatakformAttendance, auth: {GET: AuthType.TATAKFORM_ACCOUNT} },
   { path: "/tatakforms/attendance/:slug/count/:collegeId", methods: ['GET'], handler: tatakformAttendance, auth: { GET: AuthType.TATAKFORM_ACCOUNT_ADMIN}},
   { path: "/tatakforms/student/:studentId" , methods: ['GET'], handler: tatakformStudents, auth: { GET: AuthType.TATAKFORM_ACCOUNT }},
+  
+  { path: "/tatakforms/student/forgot" , methods: ['POST'], handler: tatakformStudents },
+  { path: "/tatakforms/student/reset/:token" , methods: ['GET'], handler: tatakformStudents },
+  { path: "/tatakforms/student/reset" , methods: ['POST'], handler: tatakformStudents },
+
   { path: "/tatakforms/config", methods: ["GET"], handler: tatakforms },
   { path: "/tatakforms", methods: ["GET"], handler: tatakforms },
 

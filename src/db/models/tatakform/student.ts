@@ -1,17 +1,19 @@
-import type { UnivStudentModel } from "../../../types/models";
+import type { TatakformStudent, UnivStudentModel } from "../../../types/models";
 import type { MariaUpdateResult } from "../../../types";
 
 import { PaginationOutput } from "../../../types/request";
-import { ErrorTypes } from "../../../types/enums";
+import { EmailType, ErrorTypes } from "../../../types/enums";
+import { sendEmail } from "../../../utils/email";
 
 import { isNumber, isEmail, trim, isObjectEmpty } from "../../../utils/string";
-import { hashPassword } from "../../../utils/security";
+import { generateToken, hashPassword } from "../../../utils/security";
 import { paginationWrapper } from "../../../utils/pagination";
 import { UnivStudentsColumn } from "../../structure.d";
 
 import Database from "../..";
 import Log from "../../../utils/log";
 import Strings from "../../../config/strings";
+import Config from "../../../config";
 
 /**
  * TatakForm Student model
@@ -176,6 +178,201 @@ class TatakFormStudent {
       catch (e) {
         Log.e(e);
         reject(ErrorTypes.DB_ERROR);
+      }
+    });
+  }
+
+  /**
+   * Send forgot password email
+   * @param student_id Student ID
+   */
+  public static forgotPassword(student_id: string): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Get student by student id
+        const student = await TatakFormStudent.getByStudentId(student_id);
+        // Add reset token
+        const token = await TatakFormStudent.addResetToken(student.id);
+
+        // Log
+        Log.i(`📧 [TATAKFORM] Sending forgot password email to ${student.first_name} ${student.last_name} (${student_id})`);
+
+        // Send email
+        sendEmail({
+          type: EmailType.FORGOT_PASSWORD,
+          to: student.email_address,
+          subject: Strings.FORGOT_PASSWORD_EMAIL_SUBJECT,
+          title: Strings.FORGOT_PASSWORD_EMAIL_SUBJECT,
+          data: {
+            name: student.first_name + " " + student.last_name,
+            link: Strings.DOMAIN + "/tatakforms/reset/" + token,
+            validity: Config.TOKEN_VALIDITY
+          }
+        });
+
+        resolve();
+      }
+      
+      // Log error and reject promise
+      catch (e) {
+        Log.e(e);
+        reject(ErrorTypes.DB_ERROR);
+      }
+    });
+  }
+
+  /**
+   * Add reset token for password reset request
+   * @param row_id Student primary database ID
+   */
+  public static addResetToken(row_id: number): Promise<string> {
+    return new Promise(async (resolve, reject) => {
+      // Generate token
+      const token = await generateToken(Config.TOKEN_LENGTH);
+
+      try {
+        // Get database instance
+        const db = Database.getInstance();
+
+        // Insert token
+        const result = await db.query<MariaUpdateResult>(
+          `INSERT INTO tatakforms_reset_tokens (tatakforms_students_id, token, is_used, date_stamp) VALUES (?, ?, 0, NOW())`, [
+            row_id, token,
+          ]
+        );
+
+        // If no affected rows
+        if (result.affectedRows === 0) {
+          Log.e("[TATAKFORMS] Reset Token Insert Failed: No rows affected");
+          return reject("[TATAKFORMS] Student Reset Token Insert Failed: No rows affected");
+        }
+
+        // Resolve promise
+        resolve(token);
+      }
+
+      // Log error and reject promise
+      catch (e) {
+        Log.e(e);
+        reject(e);
+      }
+    });
+  }
+
+  /**
+   * Get student by reset token
+   * @param token Reset token
+   */
+  public static fromResetToken(token: string): Promise<TatakformStudent> {
+    return new Promise(async (resolve, reject) => {
+      // Get database instance
+      const db = Database.getInstance();
+
+      try {
+        // Get student
+        const result = await db.query<(TatakformStudent & { is_used: number, token_created: string })[]>(`
+          SELECT
+            s.id, s.student_id, s.last_name, s.first_name,
+            s.year_level, s.email_address, s.password, s.date_stamp,
+            rt.is_used, rt.date_stamp AS token_created
+          FROM
+            tatakforms_reset_tokens rt
+          INNER JOIN
+            tatakforms_students s ON s.id = rt.tatakforms_students_id
+          WHERE
+            rt.token = ?
+        `, [token]);
+
+        // If no results
+        if (result.length === 0) {
+          Log.e(`[TATAKFORMS] [FROM_RESET_TOKEN] Student not found (token = ${token})`);
+          return reject(ErrorTypes.DB_EMPTY_RESULT);
+        }
+
+        // If token is already used
+        if (result[0].is_used > 0) {
+          Log.e(`[TATAKFORMS] [FROM_RESET_TOKEN] Token already used (token = ${token})`);
+          return reject(ErrorTypes.DB_USED);
+        }
+
+        // If token is expired
+        const currentDate = new Date();
+        const tokenDate = new Date(result[0].token_created);
+
+        if (currentDate.getTime() - tokenDate.getTime() > Config.TOKEN_VALIDITY * 60 * 1000) {
+          Log.e(`[TATAKFORMS] [FROM_RESET_TOKEN] Token expired (token = ${token})`);
+          return reject(ErrorTypes.DB_EXPIRED);
+        }
+
+        // Resolve promise
+        resolve(result[0]);
+      }
+      
+      // Log error and reject promise
+      catch (e) {
+        Log.e(e);
+        reject(ErrorTypes.DB_ERROR);
+      }
+    });
+  }
+
+  /**
+   * Reset password from token
+   * @param token Reset token
+   * @param password New password
+   */
+  public static updatePasswordFromToken(token: string, password: string): Promise<TatakformStudent> {
+    return new Promise(async (resolve, reject) => {
+      // Validate password
+      if (!password) {
+        return reject([Strings.RESET_PASSWORD_EMPTY_PASSWORD, "password"]);
+      }
+
+      // Get connection instance
+      const db = await Database.getConnection();
+
+      try {
+        // Hash password
+        const hash = await hashPassword(password);
+        // Get student from token
+        const student = await TatakFormStudent.fromResetToken(token);
+        // Start transaction
+        await db.beginTransaction();
+
+        // Update password
+        let result = await db.query<MariaUpdateResult>(
+          `UPDATE tatakforms_students SET password = ? WHERE id = ?`, [ hash, student.id ]
+        );
+
+        // If no affected rows
+        if (result.affectedRows === 0) {
+          await db.rollback();
+          Log.e("[TATAKFORMS] [RESET_PASSWORD] Student update failed: No rows affected");
+          return reject(ErrorTypes.DB_EMPTY_RESULT);
+        }
+
+        // Update token
+        result = await db.query<MariaUpdateResult>(
+          `UPDATE tatakforms_reset_tokens SET is_used = 1, reset_date_stamp = NOW() WHERE token = ?`, [ token ]
+        );
+
+        // If no affected rows
+        if (result.affectedRows === 0) {
+          await db.rollback();
+          Log.e("[TATAKFORMS] [RESET_PASSWORD] Reset token update failed: No rows affected");
+          return reject(ErrorTypes.DB_EMPTY_RESULT);
+        }
+
+        // Commit transaction
+        await db.commit();
+        // Resolve promise
+        resolve(student);
+      }
+
+      // Rollback and reject promise
+      catch (error) {
+        await db.rollback();
+        return reject(error);
       }
     });
   }
