@@ -73,7 +73,8 @@ declare global {
       SECRET_KEY: string,
       ORDERS_UPDATE_ALLOWED_KEYS: string,
       STUDENTS_UPDATE_ALLOWED_KEYS: string,
-      API_KEY: string
+      API_KEY: string,
+      WS_AUTH_KEY: string
     }
   }
 }

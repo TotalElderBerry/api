@@ -2,6 +2,7 @@ import { ErrorTypes } from "../../../types/enums";
 import { TatakformModel } from "../../../types/models";
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { getReadableDate } from "../../../utils/date";
+import { ElysiaWS } from "elysia/dist/ws";
 import { join } from "path";
 
 import TatakFormAttendance from "./attendance";
@@ -9,6 +10,7 @@ import TatakFormStudent from "./student";
 import Log from "../../../utils/log";
 import College from "../college";
 import Database from "../..";
+import Elysia from "elysia";
 
 /**
  * TatakForm model
@@ -16,6 +18,11 @@ import Database from "../..";
  * @author mavyfaby (Maverick G. Fabroa)
  */
 class Tatakform {
+  /**
+   * Socket client set
+   */
+  private static socketClients: Map<string, ElysiaWS<any, any, any>> = new Map();
+
   /**
    * Get all courses
    */
@@ -80,6 +87,77 @@ class Tatakform {
   }
 
   /**
+   * Get socket client by college acronym
+   * @param college_id College ID
+   */
+  public static getSocketClientsWith(college_id: number): ElysiaWS<any, any, any>[] {
+    // List of sockets
+    const sockets: ElysiaWS<any, any, any>[] = [];
+
+    // For every socket client
+    for (const [key, socket] of Tatakform.socketClients) {
+      // If key college acronym
+      if (key.startsWith(college_id.toString())) {
+        // Add to list
+        sockets.push(socket);
+      }
+    }
+
+    return sockets;
+  }
+
+  /**
+   * Initialize Websocket namespace
+   * @param app 
+   */
+  public static async initWebsocket(app: Elysia) {
+    try {
+      // Get all colleges
+      const colleges = await College.getAll();
+  
+      // For every college
+      for (const college of colleges) {
+        // Log initialization
+        Log.i(`🌐 [Tatakform] [${college.acronym}] – Initializing websocket namespace...`);
+        
+        // Create namespace
+        app.ws(`/ws/tatakforms/${college.acronym.toLowerCase()}`, {
+          beforeHandle(context) {
+            // Check if auth key is valid
+            if (context.query["auth"] !== Bun.env.WS_AUTH_KEY) {
+              return context.set.status = 401;
+            }
+
+            // Check if event slug provided
+            if (!context.query["event_slug"]) {
+              return context.set.status = 400;
+            }
+          },
+          open(socket) {
+            // Log new connection
+            Log.i(`🌐 [Tatakform] [${college.acronym}] – New connection #${socket.id}`);
+            // Add socket to map
+            Tatakform.socketClients.set(`${college.id}-${socket.id}`, socket);
+          },
+          close(socket) {
+            // Log connection closed
+            Log.e(`❌ [Tatakform] [${college.acronym}] – Connection closed #${socket.id}`);
+            // Remove socket from map
+            Tatakform.socketClients.delete(`${college.id}-${socket.id}`);
+          },
+          message(socket, message) {
+            // Log message
+            Log.i(`📡 [Tatakform] [${college.acronym}] – Message from #${socket.id}: ${message}`);
+            // Don't do anything yet
+          }
+        });
+      }
+    } catch (e) {
+      Log.e(e);
+    }
+  }
+
+  /**
    * Generate Tatakform PDF
    */
   public static generatePDF(studentId: string, slug: string): Promise<File> {
@@ -136,7 +214,7 @@ class Tatakform {
 
         // Note
         page.drawText("This tatakform was generated at https://ucmncsps.org/tatakforms", {
-          x: 170, y: 80, size: 20, font
+          x: 165, y: 80, size: 20, font
         });
 
         // TODO: Make this more dynamic

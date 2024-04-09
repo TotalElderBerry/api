@@ -36,17 +36,21 @@ export function attendance(context: ElysiaContext): Promise<ResponseBody | undef
  */
 async function postAttendance(context: ElysiaContext) {
   try {
+    // Get slug
     const slug = context.params?.slug;
-    if (slug) {
-      const tatak_event = await Tatakform.getBySlug(slug);
+    // If slug is not specified
+    if (!slug) return response.error("Invalid event slug.");
 
-      if (tatak_event) {
-        await TatakFormAttendance.attendStudent(context.body.student_id, tatak_event);
-      }
-
-      return response.success("Attended successfully", { student_id: context.body.student_id });
-    }
-  } catch (error) {
+    // Get tatakform by slug
+    const tatak_event = await Tatakform.getBySlug(slug);
+    // Attend student
+    await TatakFormAttendance.attendStudent(context.body.student_id, context.user.college_id, tatak_event);
+    // Return response
+    return response.success("Attended successfully", { student_id: context.body.student_id });
+  }
+  
+  // Catch errors
+  catch (error) {
     // if list of errors
     if (Array.isArray(error)) {
       context.set.status = 400;
@@ -78,10 +82,10 @@ async function postAttendance(context: ElysiaContext) {
  */
 async function getAttendance(context: ElysiaContext) {
   try {
-    
+
     // Get slug
     const slug = context.params?.slug;
-    
+
     // If slug is specified
     if (slug) {
       // If path contains with count
@@ -93,7 +97,7 @@ async function getAttendance(context: ElysiaContext) {
         // Return response
         return response.success("Fetch Successful", count);
       }
-      
+
       // If path ends with "download"
       if (context.path.endsWith("download")) {
         // Generate PDF
@@ -119,7 +123,7 @@ async function getAttendance(context: ElysiaContext) {
     // Return response
     return response.success("Fetch Successful", history);
   }
-  
+
   catch (error) {
     // if list of errors
     if (Array.isArray(error)) {
@@ -153,7 +157,7 @@ async function getAllStudentsAttended(context: ElysiaContext) {
       return response.success("Success", attendance)
     }
   }
-  
+
   catch (error) {
     return response.error(error)
   }

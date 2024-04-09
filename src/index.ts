@@ -12,6 +12,7 @@ import routes, { status404, status501 } from "./routes";
 import response from "./utils/response";
 import Strings from "./config/strings";
 import Log from "./utils/log";
+import Tatakform from "./db/models/tatakform/tatakform";
 
 const app = new Elysia({ name: "UC Main CSPS API" });
 const port = process.env.PORT || 3000;
@@ -20,6 +21,8 @@ const port = process.env.PORT || 3000;
 app.use(helmet());
 // Extend logging mechanism to Elysia
 Log.extend(app);
+// Initialize Websocket for real-time Tatakform updates
+await Tatakform.initWebsocket(app);
 
 // Set default headers
 app.onBeforeHandle((context: ElysiaContext) => {
