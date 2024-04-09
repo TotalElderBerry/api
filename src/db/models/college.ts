@@ -21,7 +21,7 @@ class College {
 
       try {
         // Get all courses
-        const colleges = await db.query<CollegeModel[]>(`SELECT * FROM colleges`);
+        const colleges = await db.query<CollegeModel[]>(`SELECT * FROM colleges WHERE disabled = 0`);
 
         // If no results
         if (colleges.length === 0) {
@@ -61,7 +61,7 @@ class College {
 
       try {
         // Get college by acronym
-        const college = await db.query<CollegeModel[]>(`SELECT * FROM colleges WHERE acronym = ? LIMIT 1`, [acronym]);
+        const college = await db.query<CollegeModel[]>(`SELECT * FROM colleges WHERE disabled = 0 AND acronym = ? LIMIT 1`, [acronym]);
 
         // If no results
         if (college.length === 0) {
@@ -107,7 +107,7 @@ class College {
         }
 
         // Set the courses to the college
-        const college = await db.query<CollegeModel[]>(`SELECT * FROM colleges WHERE id = ? LIMIT 1`, [courses[0].college_id]);
+        const college = await db.query<CollegeModel[]>(`SELECT * FROM colleges WHERE disabled = 0 AND id = ? LIMIT 1`, [courses[0].college_id]);
 
         // If no results
         if (college.length === 0) {
