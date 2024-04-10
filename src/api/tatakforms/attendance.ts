@@ -43,8 +43,15 @@ async function postAttendance(context: ElysiaContext) {
 
     // Get tatakform by slug
     const tatak_event = await Tatakform.getBySlug(slug);
+    
     // Attend student
-    await TatakFormAttendance.attendStudent(context.body.student_id, context.user.college_id, tatak_event);
+    await TatakFormAttendance.attendStudent({
+      studentId: context.body.student_id,
+      collegeId: context.user.college_id,
+      dateStamp: context.body.date_stamp,
+      event: tatak_event
+    });
+
     // Return response
     return response.success("Attended successfully", { student_id: context.body.student_id });
   }

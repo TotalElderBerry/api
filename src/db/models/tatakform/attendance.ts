@@ -28,16 +28,13 @@ enum EventStatus {
 class TatakFormAttendance {
   /**
    * Attend student
-   * @param studentId Student ID
-   * @param collegeId College ID
-   * @param event Tatakform event
    */
-  public static attendStudent(studentId: string, collegeId: number, event: TatakformModel) {
+  public static attendStudent(data: { studentId: string, dateStamp: string, collegeId: number, event: TatakformModel }) {
     return new Promise(async (resolve, reject) => {
       // Get database instance
       const db = Database.getInstance();
       // Get column name
-      const columnName = TatakFormAttendance.getCurrentDay(event);
+      const columnName = TatakFormAttendance.getCurrentDay(data.event, data.dateStamp);
       
       // Switch column name
       switch(columnName) {
@@ -54,44 +51,44 @@ class TatakFormAttendance {
         let query = "";
 
         // Check if student has already attended
-        if (await TatakFormAttendance.hasAttended(studentId, event.id)) {
+        if (await TatakFormAttendance.hasAttended(data.studentId, data.event.id)) {
           // Check if student has not yet registered time
-          await TatakFormAttendance.isStudentAttended(studentId, event.id, columnName);
+          await TatakFormAttendance.isStudentAttended(data.studentId, data.event.id, columnName);
 
           // Query to update attendance
-          query = `UPDATE tatakforms_attendance SET ${columnName} = NOW() WHERE student_id = ? and event_id = ?`
+          query = `UPDATE tatakforms_attendance SET ${columnName} = ? WHERE student_id = ? and event_id = ?`
 
           // Update attendance
-          const updateResult = await db.query<MariaUpdateResult>(
-            query, [studentId, event.id]
+          const updateResult = await db.query<MariaUpdateResult>(query,
+            [data.dateStamp, data.studentId, data.event.id]
           );
 
           // Resolve promise
           if (updateResult.affectedRows > 0) {
-            Log.i(`✅ [TATAKFORM] [ATTENDANCE] [${studentId}] ${TatakFormAttendance.mapDayName(columnName)}`);
-            resolve(`Student (${studentId}) has attended for ${TatakFormAttendance.mapDayName(columnName)}.`);
+            Log.i(`✅ [TATAKFORM] [ATTENDANCE] [${data.studentId}] ${TatakFormAttendance.mapDayName(columnName)}`);
+            resolve(`Student (${data.studentId}) has attended for ${TatakFormAttendance.mapDayName(columnName)}.`);
 
             // Send to socket client
-            TatakFormAttendance.sendToSocketClients(collegeId, event.slug);
+            TatakFormAttendance.sendToSocketClients(data.collegeId, data.event.slug);
           }
         }
         
         // If student has not yet attended
         else {
-          query = `INSERT INTO tatakforms_attendance (student_id, event_id, ${columnName}) VALUES (?,?,NOW())`
+          query = `INSERT INTO tatakforms_attendance (student_id, event_id, ${columnName}) VALUES (?, ?, ?)`
           
           // Insert attendance
           const updateResult = await db.query<MariaUpdateResult>(
-            query, [studentId, event.id]
+            query, [data.studentId, data.event.id, data.dateStamp]
           );
 
           // Resolve promise
           if (updateResult.affectedRows > 0) {
-            Log.i(`✅ [TATAKFORM] [ATTENDANCE] [${studentId}] ${TatakFormAttendance.mapDayName(columnName)}`);
-            resolve(`Student (${studentId}) has attended for ${TatakFormAttendance.mapDayName(columnName)}.`);
+            Log.i(`✅ [TATAKFORM] [ATTENDANCE] [${data.studentId}] ${TatakFormAttendance.mapDayName(columnName)}`);
+            resolve(`Student (${data.studentId}) has attended for ${TatakFormAttendance.mapDayName(columnName)}.`);
 
             // Send to socket client
-            TatakFormAttendance.sendToSocketClients(collegeId, event.slug);
+            TatakFormAttendance.sendToSocketClients(data.collegeId, data.event.slug);
           }
         }
       } catch (error) {
@@ -326,9 +323,9 @@ class TatakFormAttendance {
   /**
    * Get current day and return message
    */
-  private static getCurrentDay(event: TatakformModel): Days | EventStatus {
+  private static getCurrentDay(event: TatakformModel, dateStamp?: string): Days | EventStatus {
     // Get current date
-    const currentDate = new Date();
+    const currentDate = dateStamp ? new Date(dateStamp) : new Date();
     // Get from date
     const fromDate = new Date(event.from_date);
     // Get to date
