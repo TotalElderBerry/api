@@ -351,7 +351,7 @@ class TatakFormAttendance {
     if (currentDate >= toDate) return EventStatus.ALREADY_CLOSED;
 
     // AM START
-    const AM_START_HOUR = 8;
+    const AM_START_HOUR = 7;
     // AM END
     const AM_END_HOUR = 12;
     // PM START
