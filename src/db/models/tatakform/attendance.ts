@@ -4,6 +4,8 @@ import { AttendanceModel, TatakformModel } from "../../../types/models";
 import Database from "../..";
 import Log from "../../../utils/log";
 import Tatakform from "./tatakform";
+import TatakFormStudent from "./student";
+import College from "../college";
 
 enum Days {
   DAY1AM = "day1_am",
@@ -31,22 +33,33 @@ class TatakFormAttendance {
    */
   public static attendStudent(data: { studentId: string, dateStamp: string, collegeId: number, event: TatakformModel }) {
     return new Promise(async (resolve, reject) => {
-      // Get database instance
-      const db = Database.getInstance();
-      // Get column name
-      const columnName = TatakFormAttendance.getCurrentDay(data.event, data.dateStamp);
-      
-      // Switch column name
-      switch(columnName) {
-        case EventStatus.NOT_ACCEPTING:
-          return reject("Event is not accepting attendance.");
-        case EventStatus.NOT_YET_OPEN:
-          return reject("Event is not yet open.");
-        case EventStatus.ALREADY_CLOSED:
-          return reject("Event is already closed.");
-      }
-        
       try {
+        // Get column name
+        const columnName = TatakFormAttendance.getCurrentDay(data.event, data.dateStamp);
+        
+        // Switch column name
+        switch(columnName) {
+          case EventStatus.NOT_ACCEPTING:
+            return reject("Event is not accepting attendance.");
+          case EventStatus.NOT_YET_OPEN:
+            return reject("Event is not yet open.");
+          case EventStatus.ALREADY_CLOSED:
+            return reject("Event is already closed.");
+        }
+
+        // Get student's college data
+        const college = await TatakFormStudent.getCollegeFromStudentId(data.studentId);
+
+        // If not synced
+        if (college.id !== data.collegeId) {
+          // Get college from college id
+          const c = await College.getById(data.collegeId);
+          // Reject promise
+          return reject(`Student is not part of ${c.name} college/department.`);
+        }
+
+        // Get database instance
+        const db = Database.getInstance();
         // Query
         let query = "";
 

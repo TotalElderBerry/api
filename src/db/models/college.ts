@@ -88,6 +88,42 @@ class College {
   }
 
   /**
+   * Get college by id
+   */
+  public static getById(id: number): Promise<CollegeModel> {
+    return new Promise(async (resolve, reject) => {
+      // Get database instance
+      const db = Database.getInstance();
+
+      try {
+        // Get college by acronym
+        const college = await db.query<CollegeModel[]>(`SELECT * FROM colleges WHERE disabled = 0 AND id = ? LIMIT 1`, [id]);
+
+        // If no results
+        if (college.length === 0) {
+          Log.e(`College with id ${id} not found`);
+          return reject(`College with id ${id} not found`);
+
+        }
+        
+        // Get all courses
+        const courses = await db.query<CourseModel[]>(`SELECT * FROM colleges_courses WHERE college_id = ?`, [college[0].id]);
+        // Set the courses to the college
+        college[0].courses = courses;
+
+        // Return the college
+        resolve(college[0]);
+      }
+      
+      // Log error and reject promise
+      catch (e) {
+        Log.e(e);
+        reject(ErrorTypes.DB_ERROR);
+      }
+    });
+  }
+
+  /**
    * Get college by acronym
    * @param acronym 
    */

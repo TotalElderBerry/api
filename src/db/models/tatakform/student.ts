@@ -1,4 +1,4 @@
-import type { TatakformStudent, UnivStudentModel } from "../../../types/models";
+import type { CollegeModel, TatakformStudent, UnivStudentModel } from "../../../types/models";
 import type { MariaUpdateResult } from "../../../types";
 
 import { PaginationOutput } from "../../../types/request";
@@ -14,6 +14,7 @@ import Database from "../..";
 import Log from "../../../utils/log";
 import Strings from "../../../config/strings";
 import Config from "../../../config";
+import College from "../college";
 
 /**
  * TatakForm Student model
@@ -373,6 +374,43 @@ class TatakFormStudent {
       catch (error) {
         await db.rollback();
         return reject(error);
+      }
+    });
+  }
+
+  /**
+   * Get college from student id
+   */
+  public static getCollegeFromStudentId(student_id: string): Promise<CollegeModel> {
+    return new Promise(async (resolve, reject) => {
+      // Get database instance
+      const db = Database.getInstance();
+
+      try {
+        // Get colleges
+        const colleges = await College.getAll();
+        // Get student
+        const student = await TatakFormStudent.getByStudentId(student_id);
+
+        // Find college
+        for (const college of colleges) {
+          if (!college.courses) continue;
+
+          for (const course of college.courses) {
+            if (course.id === student.course_id) {
+              return resolve(college);
+            }
+          }
+        }
+        
+        // If not found
+        reject("College not found");
+      }
+      
+      // Log error and reject promise
+      catch (e) {
+        Log.e(e);
+        reject(e);
       }
     });
   }
