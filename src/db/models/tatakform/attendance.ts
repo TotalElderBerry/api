@@ -14,6 +14,12 @@ enum Days {
   DAY3PM = "day3_pm"
 }
 
+enum EventStatus {
+  NOT_ACCEPTING,
+  NOT_YET_OPEN,
+  ALREADY_CLOSED
+}
+
 /**
  * TatakForm Attendance Model
  * @author mavyfaby (Maverick Fabroa)
@@ -28,45 +34,25 @@ class TatakFormAttendance {
    */
   public static attendStudent(studentId: string, collegeId: number, event: TatakformModel) {
     return new Promise(async (resolve, reject) => {
-      // Default column name
-      let columnName = Days.DAY1AM;
-      // Query
-      let query = "";
-
       // Get database instance
       const db = Database.getInstance();
-      // Get current date
-      const currentDate = new Date();
-      // Get from date
-      const fromDate = new Date(event.from_date);
-      // Get to date
-      const toDate = new Date(event.to_date);
-      toDate.setDate(toDate.getDate() + 1)
-
-      // Check if event is open
-      if (currentDate >= fromDate && currentDate <= toDate) {
-        const dayDifference = Math.floor((currentDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
-        const currentDay = dayDifference + 1;
-        const isAM = currentDate.getHours() < 12;
-
-        if (currentDay === 1 && !isAM) {
-          columnName = Days.DAY1PM;
-        } else if (currentDay === 2 && isAM) {
-          columnName = Days.DAY2AM;
-        } else if (currentDay === 2 && !isAM) {
-          columnName = Days.DAY2PM;
-        } else if (currentDay === 3 && isAM) {
-          columnName = Days.DAY3AM;
-        } else if (currentDay === 3 && !isAM) {
-          columnName = Days.DAY3PM;
-        }
-      } else if (currentDate < fromDate) {
-        return reject("Event is still closed.");
-      } else {
-        return reject("Event already ended.");
+      // Get column name
+      const columnName = TatakFormAttendance.getCurrentDay(event);
+      
+      // Switch column name
+      switch(columnName) {
+        case EventStatus.NOT_ACCEPTING:
+          return reject("Event is not accepting attendance.");
+        case EventStatus.NOT_YET_OPEN:
+          return reject("Event is not yet open.");
+        case EventStatus.ALREADY_CLOSED:
+          return reject("Event is already closed.");
       }
-
+        
       try {
+        // Query
+        let query = "";
+
         // Check if student has already attended
         if (await TatakFormAttendance.hasAttended(studentId, event.id)) {
           // Check if student has not yet registered time
@@ -219,7 +205,7 @@ class TatakFormAttendance {
   /**
    * Get all attendance of students by event and college
    */
-  public static getStudentsAttendedByEventAndCollege(eventId: number, collegeId: number, day?: Days) {
+  public static getStudentsAttendedByEventAndCollege(eventId: number, collegeId: number) {
     return new Promise(async (resolve, reject) => {
       // Get database instance
       const db = Database.getInstance();
@@ -235,7 +221,7 @@ class TatakFormAttendance {
           INNER JOIN
             colleges_courses c ON c.id = s.course_id
           WHERE
-            a.student_id = s.student_id AND event_id = ? and c.college_id = ? ${day ? `AND ${day} IS NOT NULL` : ""}
+            a.student_id = s.student_id AND event_id = ? and c.college_id = ?
           `, [eventId, collegeId]
         );
 
@@ -257,10 +243,27 @@ class TatakFormAttendance {
   /**
    * Get all attendance count by event and college
    */
-  public static getStudentCountAttendedBySlugAndCollege(eventSlug: string, collegeId: number) {
+  public static getStudentCountAttendedBySlugAndCollege(eventSlug: string, collegeId: number, willBaseOnDay?: boolean) {
     return new Promise(async (resolve, reject) => {
       // Get database instance
       const db = Database.getInstance();
+      // Current day value
+      let day: Days | EventStatus = EventStatus.NOT_ACCEPTING;
+
+      // If will base on day
+      if (willBaseOnDay) {
+        // Get current day
+        day = TatakFormAttendance.getCurrentDay(await Tatakform.getBySlug(eventSlug));
+
+        // Switch current day
+        switch (day) {
+          case EventStatus.NOT_ACCEPTING:
+          case EventStatus.NOT_YET_OPEN:
+          case EventStatus.ALREADY_CLOSED:
+            return resolve(-1);
+        }
+      }
+      
 
       try {
         const result = await db.query<{ count: bigint }[]>(
@@ -275,7 +278,7 @@ class TatakFormAttendance {
           INNER JOIN
             colleges_courses c ON c.id = s.course_id
           WHERE
-            a.student_id = s.student_id AND t.slug = ? and c.college_id = ?
+            a.student_id = s.student_id AND t.slug = ? and c.college_id = ? ${day ? `AND ${day} IS NOT NULL` : ""}
           `, [eventSlug, collegeId]
         );
 
@@ -318,6 +321,69 @@ class TatakFormAttendance {
         reject(e);
       }
     });
+  }
+
+  /**
+   * Get current day and return message
+   */
+  private static getCurrentDay(event: TatakformModel): Days | EventStatus {
+    // Get current date
+    const currentDate = new Date();
+    // Get from date
+    const fromDate = new Date(event.from_date);
+    // Get to date
+    const toDate = new Date(event.to_date);
+    toDate.setDate(toDate.getDate() + 1);
+
+    // If event is not yet open
+    if (currentDate < fromDate) return EventStatus.NOT_YET_OPEN;
+    // If event is already closed
+    if (currentDate >= toDate) return EventStatus.ALREADY_CLOSED;
+
+    // AM START
+    const AM_START_HOUR = 8;
+    // AM END
+    const AM_END_HOUR = 12;
+    // PM START
+    const PM_START_HOUR = 13;
+    // PM END
+    const PM_END_HOUR = 17;
+
+    // Get day difference
+    const dayDifference = Math.floor((currentDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
+    // Get current day
+    const currentDay = dayDifference + 1;
+    // Get current hour
+    const currentHour = currentDate.getHours();
+
+    // If between AM start and AM end
+    if (currentHour >= AM_START_HOUR && currentHour < AM_END_HOUR ) {
+      // Switch current day
+      switch (currentDay) {
+        case 1:
+          return Days.DAY1AM;
+        case 2:
+          return Days.DAY2AM;
+        case 3:
+          return Days.DAY3AM;
+      }
+    }
+
+    // If between PM start and PM end
+    if (currentHour >= PM_START_HOUR && currentHour < PM_END_HOUR) {
+      // Switch current day
+      switch (currentDay) {
+        case 1:
+          return Days.DAY1PM;
+        case 2:
+          return Days.DAY2PM;
+        case 3:
+          return Days.DAY3PM;
+      }
+    }
+
+    // Event not yet accepting attendance
+    return EventStatus.NOT_ACCEPTING;
   }
 
   /**

@@ -93,7 +93,7 @@ async function getAttendance(context: ElysiaContext) {
         // Get college id
         const collegeId = context.params?.collegeId;
         // Get attendance count
-        const count = await TatakFormAttendance.getStudentCountAttendedBySlugAndCollege(slug, Number(collegeId));
+        const count = await TatakFormAttendance.getStudentCountAttendedBySlugAndCollege(slug, Number(collegeId), true);
         // Return response
         return response.success("Fetch Successful", count);
       }
