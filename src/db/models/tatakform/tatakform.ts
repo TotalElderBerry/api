@@ -162,16 +162,17 @@ class Tatakform {
    */
   public static generatePDF(studentId: string, slug: string): Promise<File> {
     return new Promise(async (resolve, reject) => {
-      // Get event by slug
-      const tatakform = await Tatakform.getBySlug(slug);
-      // Get student
-      const student = await TatakFormStudent.getByStudentId(studentId);
-      // Get attendance history by event
-      const attendance = await TatakFormAttendance.getAttendanceByEvent(studentId, tatakform.id);
-      // Get college
-      const college = await College.getByCourseId(student.course_id);
-
+      
       try {
+        // Get event by slug
+        const tatakform = await Tatakform.getBySlug(slug);
+        // Get student
+        const student = await TatakFormStudent.getByStudentId(studentId);
+        // Get attendance history by event
+        const attendance = await TatakFormAttendance.getAttendanceByEvent(studentId, tatakform.id);
+        // Get college
+        const college = await College.getByCourseId(student.course_id);
+
         // Get tatakform template pdf file
         const template = Bun.file(join(Bun.main, `../../assets/tatakform/${slug}.pdf`));
         // Get logo file

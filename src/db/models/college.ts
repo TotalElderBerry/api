@@ -125,7 +125,7 @@ class College {
       // Log error and reject promise
       catch (e) {
         Log.e(e);
-        reject(ErrorTypes.DB_ERROR);
+        reject(e);
       }
     });
   }
