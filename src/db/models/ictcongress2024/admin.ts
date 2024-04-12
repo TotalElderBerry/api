@@ -474,10 +474,10 @@ class Admin {
         }
 
         // If student hasn't claimed the tshirt yet
-        if (!result[0].tshirt_claimed) {
-          Log.w(`[ICT Congress 2024] [${campus.campus_name}] [PRESENT] Student ${result[0].first_name} ${result[0].last_name} (${result[0].student_id}) hasn't claimed the tshirt yet.`);
-          return reject("Student hasn't claimed the tshirt yet.");
-        }
+        // if (!result[0].tshirt_claimed) {
+        //   Log.w(`[ICT Congress 2024] [${campus.campus_name}] [PRESENT] Student ${result[0].first_name} ${result[0].last_name} (${result[0].student_id}) hasn't claimed the tshirt yet.`);
+        //   return reject("Student hasn't claimed the tshirt yet.");
+        // }
 
         // If student already marked as present
         if (result[0].attendance) {
